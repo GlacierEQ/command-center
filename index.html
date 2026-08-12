@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GlacierEQ Command Center · Operating Plane</title>
+<meta name="description" content="APEX/AKOS multi-connector operating plane — health, intents, registry, MCP domains." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">GEQ</div>
+      <div>
+        <div class="title">Command Center</div>
+        <div class="subtitle">APEX · AKOS Operating Plane</div>
+      </div>
+    </div>
+    <div class="top-meta">
+      <span id="clock" class="pill">--:--:--</span>
+      <span id="sb-status" class="pill warn">supabase: init</span>
+      <span id="live-mode" class="pill">mode: snapshot</span>
+      <button id="btn-refresh" class="btn">Refresh</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-tab="plane" class="active">Plane</button>
+    <button data-tab="connectors">Connectors</button>
+    <button data-tab="intents">Intents</button>
+    <button data-tab="mcp">MCP Map</button>
+    <button data-tab="registry">Registry</button>
+    <button data-tab="gaps">Gaps</button>
+    <button data-tab="runbook">Runbook</button>
+  </nav>
+  <main>
+    <section id="tab-plane" class="tab active">
+      <div class="grid kpis" id="kpis"></div>
+      <div class="grid two">
+        <article class="card">
+          <h2>Fleet pulse</h2>
+          <div id="fleet-bars" class="bars"></div>
+        </article>
+        <article class="card">
+          <h2>Operator surface</h2>
+          <p class="muted">One place to drive GitHub · Vercel · Supabase · Smithery without tool-hopping.</p>
+          <div class="link-grid" id="surface-links"></div>
+          <div class="intent-quick" id="intent-quick"></div>
+        </article>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h2>AKOS pillars</h2>
+          <div id="pillars" class="pillars"></div>
+        </article>
+        <article class="card">
+          <h2>Recent ops signal</h2>
+          <div id="ops-signal" class="list"></div>
+        </article>
+      </div>
+    </section>
+    <section id="tab-connectors" class="tab">
+      <article class="card">
+        <div class="row-between">
+          <h2>Connector fleet</h2>
+          <input id="conn-filter" placeholder="filter service…" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Service</th><th>Score</th><th>Fails</th><th>Last healthy</th><th>Notes</th><th>Action</th></tr>
+            </thead>
+            <tbody id="conn-body"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+    <section id="tab-intents" class="tab">
+      <article class="card">
+        <h2>Intent palette</h2>
+        <p class="muted">Structured operator intents map natural language → tool chains. Click to copy a ready prompt for the agent.</p>
+        <div id="intents" class="intent-grid"></div>
+      </article>
+    </section>
+    <section id="tab-mcp" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>Domains</h2>
+          <div id="mcp-domains" class="list"></div>
+        </article>
+        <article class="card">
+          <h2>Connectors (MCP registry)</h2>
+          <div id="mcp-connectors" class="list"></div>
+        </article>
+      </div>
+    </section>
+    <section id="tab-registry" class="tab">
+      <article class="card">
+        <h2>System registry</h2>
+        <div id="registry" class="list"></div>
+      </article>
+    </section>
+    <section id="tab-gaps" class="tab">
+      <article class="card">
+        <h2>Gap register</h2>
+        <div id="gaps" class="list"></div>
+      </article>
+    </section>
+    <section id="tab-runbook" class="tab">
+      <article class="card">
+        <h2>Operating runbook</h2>
+        <ol class="runbook">
+          <li><strong>Boot</strong> — open this plane; confirm supabase pill is live; refresh fleet.</li>
+          <li><strong>Triage</strong> — sort connectors by score; open notes; fix auth/config first (score 0 + missing tokens).</li>
+          <li><strong>Intent</strong> — pick an intent card; paste into Perplexity with @GitHub @Vercel @Supabase @Smithery.</li>
+          <li><strong>Execute</strong> — agent uses connectors; receipts land in Supabase ops tables.</li>
+          <li><strong>Verify</strong> — re-check fleet pulse + gap register; close gaps when evidence exists.</li>
+          <li><strong>Ship</strong> — push to GitHub, deploy Vercel, migrate Supabase only with explicit operator approval on writes.</li>
+        </ol>
+        <h3>Stack constants</h3>
+        <pre id="stack-const" class="code"></pre>
+      </article>
+    </section>
+  </main>
+  <footer class="foot">
+    <span>GlacierEQ · Casey Barton · Honolulu</span>
+    <span id="build-stamp">command-center v1</span>
+  </footer>
+</div>
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
