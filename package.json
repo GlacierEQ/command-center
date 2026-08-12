@@ -1,0 +1,15 @@
+{
+  "name": "glaciereq-command-center",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Static APEX/AKOS operating plane with a live Supabase ops-data contract.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/static-contract.test.mjs",
+    "test:live": "node --test tests/live-supabase.test.mjs",
+    "verify": "npm test && npm run test:live"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
