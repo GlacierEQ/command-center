@@ -36,6 +36,7 @@
     <button data-tab="registry">Registry</button>
     <button data-tab="gaps">Gaps</button>
     <button data-tab="runbook">Runbook</button>
+    <button data-tab="claudification">Claudification</button>
   </nav>
   <main>
     <section id="tab-plane" class="tab active">
@@ -108,6 +109,68 @@
       <article class="card">
         <h2>Gap register</h2>
         <div id="gaps" class="list"></div>
+      </article>
+    </section>
+    <section id="tab-claudification" class="tab">
+      <div class="grid two">
+        <article class="card claud-command">
+          <div class="row-between">
+            <div>
+              <div class="claud-kicker">ANTHROPIC · JOB 5390966008</div>
+              <h2>Claudification Motion Desk</h2>
+            </div>
+            <span id="claud-state" class="badge neutral">IDLE</span>
+          </div>
+          <p class="muted">Run one provider-backed outbound sandbox motion through context, agent/tool planning, an explicit human send gate, bounded provider mutation, readback, and eval.</p>
+          <div class="claud-motion-title">Anthropic · Claudification</div>
+          <div class="claud-actions">
+            <button id="claud-start" class="btn claud-primary">Start motion</button>
+            <button id="claud-readback" class="btn" disabled>Read back</button>
+          </div>
+          <div id="claud-motion-id" class="claud-mono muted">No active motion.</div>
+          <div class="claud-boundary"><strong>Sandbox boundary:</strong> no email, CRM, seller, or customer contact. The provider mutation is limited to the dedicated Supabase receipt ledger.</div>
+        </article>
+        <article class="card claud-command">
+          <div class="claud-kicker">CONTROL INVARIANT</div>
+          <h2>Model output does not silently become external action.</h2>
+          <p class="muted">The motion can recover context, plan work, and propose a tool action automatically. Mutation remains blocked until a human records APPROVE, ESCALATE, or REJECT.</p>
+          <div id="claud-gate-status" class="claud-gate-pill">WAITING FOR MOTION</div>
+        </article>
+      </div>
+
+      <div class="grid two claud-section">
+        <article class="card">
+          <h2>MCP / Agent Plan</h2>
+          <div id="claud-plan" class="claud-empty">Start the motion to bind the plan.</div>
+        </article>
+        <article class="card claud-gate-card">
+          <h2>Send Gate</h2>
+          <div id="claud-proposal" class="claud-empty">No proposed action yet.</div>
+          <div class="claud-actions">
+            <button id="claud-approve" class="btn claud-primary" disabled>Approve</button>
+            <button id="claud-escalate" class="btn" disabled>Escalate</button>
+            <button id="claud-reject" class="btn claud-reject" disabled>Reject</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="grid two claud-section">
+        <article class="card">
+          <h2>Provider Receipt</h2>
+          <pre id="claud-receipt" class="code claud-code">No receipt yet.</pre>
+        </article>
+        <article class="card">
+          <h2>Eval / Ship Gate</h2>
+          <pre id="claud-eval" class="code claud-code">No eval yet.</pre>
+        </article>
+      </div>
+
+      <article class="card claud-section">
+        <div class="row-between">
+          <h2>Execution Trace</h2>
+          <span class="pill">Supabase provider readback</span>
+        </div>
+        <ol id="claud-trace" class="claud-trace"><li>Waiting for motion.</li></ol>
       </article>
     </section>
     <section id="tab-runbook" class="tab">
