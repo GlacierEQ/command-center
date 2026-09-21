@@ -80,3 +80,24 @@ test('migration does not grant anon access to named legal/court/evidence objects
     assert.doesNotMatch(grant, /(legal|court|evidence|claim|case)/i);
   }
 });
+
+
+test('Claudification desk exposes the complete human-gated runtime contract', () => {
+  const config = read('config.js');
+  assert.match(index, /data-tab="claudification"/);
+  for (const id of ['claud-start','claud-approve','claud-escalate','claud-reject','claud-receipt','claud-eval','claud-trace']) {
+    assert.match(index, new RegExp(`id=["']${id}["']`), `missing Claudification surface ${id}`);
+  }
+  assert.match(config, /claudification-runtime/);
+  assert.match(config, /5390966008/);
+  assert.match(app, /HUMAN DECISION REQUIRED/);
+  assert.match(app, /provider_receipt/);
+  assert.match(app, /claudDecide\("approve"\)/);
+  assert.match(app, /claudDecide\("escalate"\)/);
+  assert.match(app, /claudDecide\("reject"\)/);
+});
+
+test('Claudification browser client cannot choose an arbitrary provider destination', () => {
+  assert.doesNotMatch(app, /destination\s*:/);
+  assert.doesNotMatch(index, /name=["'](?:to|recipient|destination|email)["']/i);
+});
