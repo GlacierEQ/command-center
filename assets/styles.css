@@ -86,3 +86,34 @@ th { color: var(--muted); font-family: var(--mono); font-size: 0.72rem; text-tra
 .foot { margin-top: 22px; display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-family: var(--mono); font-size: 0.72rem; flex-wrap: wrap; }
 .toast { position: fixed; right: 16px; bottom: 16px; background: #123048; border: 1px solid #2d6a96; color: var(--text); padding: 10px 12px; border-radius: 10px; font-family: var(--mono); font-size: 0.78rem; opacity: 0; transform: translateY(8px); transition: .2s; z-index: 50; }
 .toast.show { opacity: 1; transform: translateY(0); }
+
+
+/* Claudification — Anthropic GTM AI Engineering runtime */
+.claud-section { margin-top: 12px; }
+.claud-command { min-height: 270px; }
+.claud-kicker { color: var(--accent); font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; margin-bottom: 6px; }
+.claud-motion-title { margin: 18px 0 10px; font-size: 1.15rem; font-weight: 700; }
+.claud-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+.claud-primary { border-color: #2f8f83; background: linear-gradient(180deg,#17645d,#10433f); }
+.claud-reject { border-color: #713838; background: linear-gradient(180deg,#4c2525,#351919); }
+.claud-mono { font-family: var(--mono); font-size: .75rem; overflow-wrap: anywhere; }
+.claud-boundary { margin-top: 16px; padding: 11px 12px; border: 1px solid #3e506a; border-radius: 12px; background: #0a1220; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.claud-boundary strong { color: var(--text); }
+.claud-gate-pill { display: inline-block; margin-top: 16px; padding: 8px 12px; border: 1px solid #6a5320; border-radius: 999px; color: var(--warn); background: #16140d; font-family: var(--mono); font-size: .75rem; }
+.claud-gate-card { border-color: #493f24; }
+.claud-empty { color: var(--muted); font-size: .88rem; }
+.claud-step { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.claud-step:last-child { border-bottom: 0; }
+.claud-step b { font-size: .86rem; }
+.claud-step span { color: var(--muted); font-family: var(--mono); font-size: .72rem; text-align: right; }
+.claud-proposal-type { color: var(--accent2); font-family: var(--mono); font-size: .8rem; margin-bottom: 8px; }
+.claud-code { min-height: 170px; max-height: 420px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.claud-trace { margin: 0; padding-left: 22px; }
+.claud-trace li { padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.claud-trace li:last-child { border-bottom: 0; }
+.claud-trace b { display: block; font-size: .86rem; }
+.claud-trace span { display: block; margin-top: 3px; color: var(--muted); font-family: var(--mono); font-size: .7rem; }
+@media (max-width: 640px) {
+  .claud-step { display: block; }
+  .claud-step span { display: block; margin-top: 4px; text-align: left; }
+}
