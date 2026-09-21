@@ -24,6 +24,105 @@ function renderStack(){$("#stack-const").textContent=JSON.stringify({supabase:cf
 function renderAll(){renderKpis();renderFleet();renderLinks();renderPillars();renderOps();renderConnectors($("#conn-filter")?.value||"");renderIntents();renderMcp();renderRegistry();renderGaps();renderStack();setStatus($("#live-mode"),state.live?"mode: live":"mode: snapshot",state.live?"ok":"warn");}
 async function initSupabase(){const status=$("#sb-status");try{if(!window.supabase)throw new Error("sdk missing");sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false}});const{error}=await sb.from("apex_connector_status").select("service",{head:true,count:"exact"});if(error){setStatus(status,"supabase: reachable/rls","warn");state.live=false;return;}setStatus(status,"supabase: live","ok");await hydrateLive();}catch(e){setStatus(status,"supabase: offline","bad");state.live=false;}}
 async function hydrateLive(){if(!sb)return;const pulls=[sb.from("apex_connector_status").select("service,health_score,consecutive_failures,last_healthy,notes").limit(100),sb.from("apex_gap_register").select("gap_title,category,priority,state,impact_score,next_action").limit(50),sb.from("everything_mcp_domains").select("domain_key,display_name,mission,status,risk_level").limit(50),sb.from("everything_mcp_connectors").select("connector_key,display_name,plane,role,status,risk_level,read_enabled,write_enabled").limit(100),sb.from("apex_system_registry").select("component,category,state,owner,notes").limit(100)];const[conn,gaps,domains,mcp,reg]=await Promise.all(pulls);let any=false;if(conn.data?.length){state.connectors=conn.data;any=true;}if(gaps.data?.length){state.gaps=gaps.data;any=true;}if(domains.data?.length){state.domains=domains.data;any=true;}if(mcp.data?.length){state.mcp_connectors=mcp.data;any=true;}if(reg.data?.length){state.registry=reg.data;any=true;}state.live=any;if(any){state.ops_signal=[{title:"Live hydrate",body:`Pulled ${state.connectors.length} connectors · ${state.gaps.length} gaps · ${state.domains.length} domains`,meta:"supabase"},...state.ops_signal.slice(0,4)];}renderAll();}
+
+let claudMotionId=null;
+function claudSetButtons({started=false,gated=false,terminal=false}={}){
+  const startBtn=$("#claud-start"),readBtn=$("#claud-readback"),approveBtn=$("#claud-approve"),escalateBtn=$("#claud-escalate"),rejectBtn=$("#claud-reject");
+  if(startBtn)startBtn.disabled=started&&!terminal;
+  if(readBtn)readBtn.disabled=!started;
+  for(const btn of [approveBtn,escalateBtn,rejectBtn])if(btn)btn.disabled=!gated;
+}
+function claudState(label,kind="neutral"){
+  const node=$("#claud-state");if(!node)return;
+  node.textContent=label;node.className="badge "+kind;
+}
+function claudRenderTrace(events=[]){
+  const node=$("#claud-trace");if(!node)return;
+  if(!events.length){node.innerHTML="<li>Provider trace not available yet.</li>";return;}
+  node.innerHTML=events.map(e=>`<li><b>${esc(e.seq)} · ${esc(e.event_type)}</b><span>${esc(e.state)} · ${esc(e.observed_at||"")}</span></li>`).join("");
+}
+function claudRenderInspect(data){
+  if(!data?.motion)return;
+  const motion=data.motion;
+  claudState(motion.state,motion.state==="VERIFIED"?"good":motion.state==="GATED"?"warn":["REJECTED","ESCALATED"].includes(motion.state)?"bad":"neutral");
+  $("#claud-motion-id").textContent=motion.motion_key+" · "+motion.id;
+  if(motion.tool_plan?.steps?.length){
+    $("#claud-plan").innerHTML=motion.tool_plan.steps.map(step=>`<div class="claud-step"><b>${esc(step.seq)} · ${esc(step.capability)}</b><span>${esc(step.mode)} · ${esc(step.status)}</span></div>`).join("");
+  }
+  if(motion.proposed_action&&Object.keys(motion.proposed_action).length){
+    $("#claud-proposal").innerHTML=`<div class="claud-proposal-type">${esc(motion.proposed_action.type)}</div><div class="muted">${esc(motion.proposed_action.side_effect_boundary||"")}</div>`;
+  }
+  if(motion.provider_receipt&&Object.keys(motion.provider_receipt).length)$("#claud-receipt").textContent=JSON.stringify(motion.provider_receipt,null,2);
+  if(motion.eval_result&&Object.keys(motion.eval_result).length)$("#claud-eval").textContent=JSON.stringify(motion.eval_result,null,2);
+  $("#claud-gate-status").textContent=motion.state==="GATED"?"SEND GATE · HUMAN DECISION REQUIRED":motion.state==="VERIFIED"?"VERIFIED · PROVIDER READBACK COMPLETE":motion.state;
+  claudRenderTrace(data.events||[]);
+  claudSetButtons({started:true,gated:motion.state==="GATED",terminal:["VERIFIED","REJECTED","ESCALATED"].includes(motion.state)});
+}
+async function claudCall(action){
+  const runtime=cfg.claudification;
+  if(!runtime?.runtimeUrl||!runtime?.demoKey)throw new Error("Claudification runtime is not configured");
+  const response=await fetch(runtime.runtimeUrl,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-demo-key":runtime.demoKey},
+    body:JSON.stringify({action,motion_id:claudMotionId}),
+    signal:AbortSignal.timeout(20000)
+  });
+  const payload=await response.json().catch(()=>({error:"invalid_provider_response"}));
+  if(!response.ok)throw new Error(payload.detail||payload.error||("runtime HTTP "+response.status));
+  return payload;
+}
+async function claudReadback(){
+  if(!claudMotionId)return;
+  const data=await claudCall("inspect");
+  claudRenderInspect(data);
+  return data;
+}
+async function claudStart(){
+  claudState("STARTING","neutral");
+  $("#claud-gate-status").textContent="BINDING CONTEXT + TOOL PLAN";
+  try{
+    const data=await claudCall("start");
+    claudMotionId=data.motion_id;
+    $("#claud-motion-id").textContent=data.motion_key+" · "+data.motion_id;
+    $("#claud-plan").innerHTML=(data.tool_plan?.steps||[]).map(step=>`<div class="claud-step"><b>${esc(step.seq)} · ${esc(step.capability)}</b><span>${esc(step.mode)} · ${esc(step.status)}</span></div>`).join("");
+    $("#claud-proposal").innerHTML=`<div class="claud-proposal-type">${esc(data.gate?.proposed_action?.type||"ACTION_PROPOSED")}</div><div class="muted">${esc(data.gate?.proposed_action?.side_effect_boundary||"")}</div>`;
+    $("#claud-receipt").textContent="Blocked by SEND GATE.";
+    $("#claud-eval").textContent="Pending explicit human decision.";
+    $("#claud-gate-status").textContent="SEND GATE · HUMAN DECISION REQUIRED";
+    claudState("GATED","warn");
+    claudSetButtons({started:true,gated:true});
+    await claudReadback();
+    toast("Motion gated. Choose approve, escalate, or reject.");
+  }catch(error){
+    claudState("ERROR","bad");$("#claud-gate-status").textContent=error.message;toast("Claudification start failed");
+  }
+}
+async function claudDecide(action){
+  if(!claudMotionId)return;
+  claudSetButtons({started:true,gated:false});
+  $("#claud-gate-status").textContent=action==="approve"?"APPROVED · EXECUTING BOUNDED PROVIDER ACTION":"RECORDING HUMAN "+action.toUpperCase();
+  try{
+    const data=await claudCall(action);
+    if(data.provider_receipt)$("#claud-receipt").textContent=JSON.stringify(data.provider_receipt,null,2);
+    else $("#claud-receipt").textContent="No provider mutation executed.";
+    if(data.eval)$("#claud-eval").textContent=JSON.stringify(data.eval,null,2);
+    else $("#claud-eval").textContent="No execution eval promoted.";
+    if(data.events)claudRenderTrace(data.events);
+    await claudReadback();
+    toast(action==="approve"?"Provider action verified and evaluated.":"Human decision recorded; execution blocked.");
+  }catch(error){
+    claudState("ERROR","bad");$("#claud-gate-status").textContent=error.message;toast("Claudification decision failed");
+  }
+}
+function bindClaudification(){
+  $("#claud-start")?.addEventListener("click",claudStart);
+  $("#claud-readback")?.addEventListener("click",async()=>{try{await claudReadback();toast("Provider readback refreshed");}catch(error){toast("Readback failed: "+error.message);}});
+  $("#claud-approve")?.addEventListener("click",()=>claudDecide("approve"));
+  $("#claud-escalate")?.addEventListener("click",()=>claudDecide("escalate"));
+  $("#claud-reject")?.addEventListener("click",()=>claudDecide("reject"));
+  claudSetButtons();
+}
+
 function bind(){$$("#tabs button").forEach(btn=>btn.addEventListener("click",()=>{$$("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");$$(".tab").forEach(t=>t.classList.remove("active"));$(`#tab-${btn.dataset.tab}`).classList.add("active");}));$("#btn-refresh").addEventListener("click",async()=>{toast("Refreshing...");await initSupabase();renderAll();});$("#conn-filter").addEventListener("input",e=>renderConnectors(e.target.value));document.addEventListener("click",e=>{const t=e.target.closest("[data-prompt], [data-copy]");if(!t)return;copy(t.getAttribute("data-prompt")||t.getAttribute("data-copy"));});setInterval(()=>{$("#clock").textContent=new Date().toLocaleTimeString();},1000);}
-bind();renderAll();initSupabase();
+bind();bindClaudification();renderAll();initSupabase();
 })();
